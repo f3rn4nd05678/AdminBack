@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using AdminBack.Service.IService;
+﻿using AdminBack.Data;
 using AdminBack.Models.DTOs;
-using System.Security.Claims;
+using AdminBack.Service.IService;
+using AdminBack.Utils;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace AdminBack.Controllers
 {
@@ -10,128 +11,44 @@ namespace AdminBack.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
+        private readonly AdminDbContext _context;
         private readonly IAuthService _authService;
 
-        public AuthController(IAuthService authService)
+        public AuthController(AdminDbContext context, IAuthService authService)
         {
+            _context = context;
             _authService = authService;
         }
 
-        /// <summary>
-        /// Iniciar sesión
-        /// </summary>
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
+        public async Task<IActionResult> Login([FromBody] LoginDto login)
         {
-            if (!ModelState.IsValid)
+            var user = await _context.Usuarios
+            .Include(u => u.Rol)
+            .FirstOrDefaultAsync(u => u.Email == login.Email);
+
+            if (user == null || !PasswordHelper.VerifyPassword(login.Contrasena, user.Contrasena))
             {
-                var errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-                return BadRequest(ApiResponse<string>.Fail("Datos inválidos", errors));
+                return Unauthorized(ResponseHelper.Fail<object>("Credenciales inválidas", 401));
             }
 
-            var result = await _authService.LoginAsync(loginDto);
+            var token = _authService.GenerateToken(user);
 
-            if (!result.IsSuccess)
+            var result = new
             {
-                return StatusCode(result.StatusCode, result);
-            }
-
-            return Ok(result);
-        }
-
-        /// <summary>
-        /// Registrar nuevo usuario
-        /// </summary>
-        [HttpPost("register")]
-        [Authorize] // Solo usuarios autenticados pueden registrar otros usuarios
-        public async Task<IActionResult> Register([FromBody] UsuarioRegisterDto registerDto)
-        {
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-                return BadRequest(ApiResponse<string>.Fail("Datos inválidos", errors));
-            }
-
-            var result = await _authService.RegisterAsync(registerDto);
-
-            if (!result.IsSuccess)
-            {
-                return StatusCode(result.StatusCode, result);
-            }
-
-            return Ok(result);
-        }
-
-        /// <summary>
-        /// Cambiar contraseña del usuario actual
-        /// </summary>
-        [HttpPost("change-password")]
-        [Authorize]
-        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto changePasswordDto)
-        {
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-                return BadRequest(ApiResponse<string>.Fail("Datos inválidos", errors));
-            }
-
-            var usuarioId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-
-            if (usuarioId == 0)
-            {
-                return Unauthorized(ApiResponse<string>.Fail("Usuario no válido"));
-            }
-
-            var result = await _authService.ChangePasswordAsync(usuarioId, changePasswordDto);
-
-            if (!result.IsSuccess)
-            {
-                return StatusCode(result.StatusCode, result);
-            }
-
-            return Ok(result);
-        }
-
-        /// <summary>
-        /// Obtener información del usuario actual
-        /// </summary>
-        [HttpGet("me")]
-        [Authorize]
-        public IActionResult GetCurrentUser()
-        {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var userName = User.FindFirst(ClaimTypes.Name)?.Value;
-            var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
-            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-
-            var userInfo = new
-            {
-                Id = userId,
-                NombreCompleto = userName,
-                Email = userEmail,
-                Rol = userRole
+                Token = token,
+                Usuario = new
+                {
+                    user.Id,
+                    user.NombreCompleto,
+                    user.Email,
+                    Rol = user.Rol?.Nombre
+                }
             };
 
-            return Ok(ApiResponse<object>.Success(userInfo));
+            return Ok(ResponseHelper.Success(result));
         }
 
-        /// <summary>
-        /// Verificar si el token es válido
-        /// </summary>
-        [HttpGet("verify-token")]
-        [Authorize]
-        public IActionResult VerifyToken()
-        {
-            return Ok(ApiResponse<string>.Success("Token válido"));
-        }
+
     }
 }

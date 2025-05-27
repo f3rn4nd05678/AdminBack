@@ -10,6 +10,9 @@ CREATE TABLE roles (
     descripcion TEXT
 );
 
+insert into roles values (1,'admin','admin');
+
+select * from usuarios;
 -- Usuarios del sistema
 CREATE TABLE usuarios (
     id SERIAL PRIMARY KEY,

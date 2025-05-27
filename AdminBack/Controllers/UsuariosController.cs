@@ -1,155 +1,59 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
+﻿using AdminBack.Models.DTOs;
+using AdminBack.Models.DTOs.Usuario;
 using AdminBack.Service.IService;
-using AdminBack.Models.DTOs;
+using AdminBack.Utils;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace AdminBack.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize] // Todos los endpoints requieren autenticación
+    [Authorize(Roles = "Administrador")]
     public class UsuariosController : ControllerBase
     {
-        private readonly IUserService _userService;
+        private readonly IUsuarioService _usuarioService;
 
-        public UsuariosController(IUserService userService)
+        public UsuariosController(IUsuarioService usuarioService)
         {
-            _userService = userService;
+            _usuarioService = usuarioService;
         }
 
-        /// <summary>
-        /// Obtener todos los usuarios
-        /// </summary>
         [HttpGet]
-        public async Task<IActionResult> GetAllUsers()
+        public async Task<IActionResult> ObtenerTodos()
         {
-            var result = await _userService.GetAllUsersAsync();
-
-            if (!result.IsSuccess)
-            {
-                return StatusCode(result.StatusCode, result);
-            }
-
-            return Ok(result);
+            var usuarios = await _usuarioService.ObtenerTodos();
+            return Ok(ResponseHelper.Success(usuarios));
         }
 
-        /// <summary>
-        /// Obtener usuario por ID
-        /// </summary>
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetUserById(int id)
+        public async Task<IActionResult> Obtener(int id)
         {
-            var result = await _userService.GetUserByIdAsync(id);
+            var usuario = await _usuarioService.ObtenerPorId(id);
+            if (usuario == null)
+                return NotFound(ResponseHelper.Fail<UsuarioDto>("Usuario no encontrado", 404));
 
-            if (!result.IsSuccess)
-            {
-                return StatusCode(result.StatusCode, result);
-            }
-
-            return Ok(result);
+            return Ok(ResponseHelper.Success(usuario));
         }
 
-        /// <summary>
-        /// Actualizar usuario existente
-        /// </summary>
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUsuarioDto updateUsuarioDto)
+        [HttpPost]
+        public async Task<IActionResult> Crear([FromBody] UsuarioCreateDto dto)
         {
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-                return BadRequest(ApiResponse<string>.Fail("Datos inválidos", errors));
-            }
+            var creado = await _usuarioService.Crear(dto);
+            if (!creado)
+                return BadRequest(ResponseHelper.Fail<object>("No se pudo crear el usuario, email ya existe", 400));
 
-            var result = await _userService.UpdateUserAsync(id, updateUsuarioDto);
-
-            if (!result.IsSuccess)
-            {
-                return StatusCode(result.StatusCode, result);
-            }
-
-            return Ok(result);
+            return Ok(ResponseHelper.Success<object>(null, "Usuario creado exitosamente"));
         }
 
-        /// <summary>
-        /// Activar/Desactivar usuario
-        /// </summary>
-        [HttpPatch("{id}/toggle-status")]
-        public async Task<IActionResult> ToggleUserStatus(int id)
-        {
-            var result = await _userService.ToggleUserStatusAsync(id);
-
-            if (!result.IsSuccess)
-            {
-                return StatusCode(result.StatusCode, result);
-            }
-
-            return Ok(result);
-        }
-
-        /// <summary>
-        /// Eliminar usuario
-        /// </summary>
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser(int id)
+        public async Task<IActionResult> Desactivar(int id)
         {
-            var result = await _userService.DeleteUserAsync(id);
+            var desactivado = await _usuarioService.Desactivar(id);
+            if (!desactivado)
+                return BadRequest(ResponseHelper.Fail<object>("No se pudo desactivar el usuario", 400));
 
-            if (!result.IsSuccess)
-            {
-                return StatusCode(result.StatusCode, result);
-            }
-
-            return Ok(result);
-        }
-
-        /// <summary>
-        /// Restablecer contraseña de usuario
-        /// </summary>
-        [HttpPost("{id}/reset-password")]
-        public async Task<IActionResult> ResetPassword(int id, [FromBody] ResetPasswordDto resetPasswordDto)
-        {
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-                return BadRequest(ApiResponse<string>.Fail("Datos inválidos", errors));
-            }
-
-            var result = await _userService.ResetPasswordAsync(id, resetPasswordDto);
-
-            if (!result.IsSuccess)
-            {
-                return StatusCode(result.StatusCode, result);
-            }
-
-            return Ok(result);
-        }
-
-        /// <summary>
-        /// Buscar usuarios por término
-        /// </summary>
-        [HttpGet("search")]
-        public async Task<IActionResult> SearchUsers([FromQuery] string searchTerm)
-        {
-            if (string.IsNullOrWhiteSpace(searchTerm))
-            {
-                return BadRequest(ApiResponse<string>.Fail("El término de búsqueda es requerido"));
-            }
-
-            var result = await _userService.SearchUsersAsync(searchTerm);
-
-            if (!result.IsSuccess)
-            {
-                return StatusCode(result.StatusCode, result);
-            }
-
-            return Ok(result);
+            return Ok(ResponseHelper.Success<object>(null, "Usuario desactivado"));
         }
     }
 }
