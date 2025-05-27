@@ -1,53 +1,155 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using AdminBack.Data;
-using AdminBack.Models;
+using Microsoft.AspNetCore.Authorization;
+using AdminBack.Service.IService;
 using AdminBack.Models.DTOs;
 
 namespace AdminBack.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize] // Todos los endpoints requieren autenticación
     public class UsuariosController : ControllerBase
     {
-        private readonly AdminDbContext _context;
+        private readonly IUserService _userService;
 
-        public UsuariosController(AdminDbContext context)
+        public UsuariosController(IUserService userService)
         {
-            _context = context;
+            _userService = userService;
         }
 
-        [HttpPost("registrar")]
-        public async Task<IActionResult> RegistrarUsuario([FromBody] UsuarioRegisterDto dto)
+        /// <summary>
+        /// Obtener todos los usuarios
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetAllUsers()
         {
-            var existe = await _context.Usuarios.AnyAsync(u => u.Email == dto.Email);
-            if (existe)
+            var result = await _userService.GetAllUsersAsync();
+
+            if (!result.IsSuccess)
             {
-                return BadRequest(ApiResponse<string>.Fail("El correo ya está registrado", new List<string> { dto.Email }));
+                return StatusCode(result.StatusCode, result);
             }
 
-            var nuevoUsuario = new Usuario
-            {
-                NombreCompleto = dto.NombreCompleto,
-                Email = dto.Email,
-                Contrasena = dto.Contrasena,
-                RolId = dto.RolId
-            };
-
-            _context.Usuarios.Add(nuevoUsuario);
-            await _context.SaveChangesAsync();
-
-            return Ok(ApiResponse<object>.Success(new { id = nuevoUsuario.Id }, "Usuario registrado correctamente"));
+            return Ok(result);
         }
 
-        [HttpGet("conexion")]
-        public async Task<IActionResult> VerificarConexion()
+        /// <summary>
+        /// Obtener usuario por ID
+        /// </summary>
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetUserById(int id)
         {
-            var puedeConectar = await _context.Database.CanConnectAsync();
-            if (puedeConectar)
-                return Ok(ApiResponse<string>.Success("Conexión exitosa"));
-            else
-                return StatusCode(500, ApiResponse<string>.Fail("Error al conectar con la base de datos"));
+            var result = await _userService.GetUserByIdAsync(id);
+
+            if (!result.IsSuccess)
+            {
+                return StatusCode(result.StatusCode, result);
+            }
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Actualizar usuario existente
+        /// </summary>
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUsuarioDto updateUsuarioDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+                return BadRequest(ApiResponse<string>.Fail("Datos inválidos", errors));
+            }
+
+            var result = await _userService.UpdateUserAsync(id, updateUsuarioDto);
+
+            if (!result.IsSuccess)
+            {
+                return StatusCode(result.StatusCode, result);
+            }
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Activar/Desactivar usuario
+        /// </summary>
+        [HttpPatch("{id}/toggle-status")]
+        public async Task<IActionResult> ToggleUserStatus(int id)
+        {
+            var result = await _userService.ToggleUserStatusAsync(id);
+
+            if (!result.IsSuccess)
+            {
+                return StatusCode(result.StatusCode, result);
+            }
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Eliminar usuario
+        /// </summary>
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteUser(int id)
+        {
+            var result = await _userService.DeleteUserAsync(id);
+
+            if (!result.IsSuccess)
+            {
+                return StatusCode(result.StatusCode, result);
+            }
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Restablecer contraseña de usuario
+        /// </summary>
+        [HttpPost("{id}/reset-password")]
+        public async Task<IActionResult> ResetPassword(int id, [FromBody] ResetPasswordDto resetPasswordDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+                return BadRequest(ApiResponse<string>.Fail("Datos inválidos", errors));
+            }
+
+            var result = await _userService.ResetPasswordAsync(id, resetPasswordDto);
+
+            if (!result.IsSuccess)
+            {
+                return StatusCode(result.StatusCode, result);
+            }
+
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Buscar usuarios por término
+        /// </summary>
+        [HttpGet("search")]
+        public async Task<IActionResult> SearchUsers([FromQuery] string searchTerm)
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                return BadRequest(ApiResponse<string>.Fail("El término de búsqueda es requerido"));
+            }
+
+            var result = await _userService.SearchUsersAsync(searchTerm);
+
+            if (!result.IsSuccess)
+            {
+                return StatusCode(result.StatusCode, result);
+            }
+
+            return Ok(result);
         }
     }
 }
