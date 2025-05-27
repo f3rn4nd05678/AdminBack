@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Newtonsoft.Json;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -75,6 +76,12 @@ builder.Services.AddAuthentication(options =>
 // Services
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+builder.Services.AddScoped<IMenuService, MenuService>();
+builder.Services.AddScoped<IConfiguracionService, ConfiguracionService>();
+builder.Services.AddScoped<IEntradaInventarioService, EntradaInventarioService>();
+
+
+
 
 
 // CORS
@@ -115,6 +122,26 @@ app.UseStatusCodePages(async context =>
         }));
     }
 });
+
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        context.Response.StatusCode = 500;
+        context.Response.ContentType = "application/json";
+
+        var response = new
+        {
+            statusCode = 500,
+            isSuccess = false,
+            message = "Error interno del servidor",
+            detail = (object)null
+        };
+
+        await context.Response.WriteAsync(JsonConvert.SerializeObject(response));
+    });
+});
+
 
 app.UseHttpsRedirection();
 

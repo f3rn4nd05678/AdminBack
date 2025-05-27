@@ -8,5 +8,7 @@ namespace AdminBack.Service.IService
         Task<UsuarioDto?> ObtenerPorId(int id);
         Task<bool> Crear(UsuarioCreateDto dto);
         Task<bool> Desactivar(int id);
+        Task<bool> Actualizar(int id, UsuarioUpdateDto dto);
+
     }
 }

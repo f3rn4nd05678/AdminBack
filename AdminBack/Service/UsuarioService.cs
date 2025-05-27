@@ -71,5 +71,19 @@ namespace AdminBack.Service
             user.Activo = false;
             return await _context.SaveChangesAsync() > 0;
         }
+        public async Task<bool> Actualizar(int id, UsuarioUpdateDto dto)
+        {
+            var user = await _context.Usuarios.FindAsync(id);
+            if (user == null)
+                return false;
+
+            user.NombreCompleto = dto.NombreCompleto;
+            user.Email = dto.Email;
+            user.RolId = dto.RolId;
+            user.Activo = dto.Activo;
+
+            return await _context.SaveChangesAsync() > 0;
+        }
+
     }
 }

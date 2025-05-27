@@ -1,9 +1,12 @@
-﻿using AdminBack.Models.DTOs;
+﻿using AdminBack.Data;
+using AdminBack.Models.DTOs;
 using AdminBack.Models.DTOs.Usuario;
 using AdminBack.Service.IService;
 using AdminBack.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
 
 namespace AdminBack.Controllers
 {
@@ -55,5 +58,33 @@ namespace AdminBack.Controllers
 
             return Ok(ResponseHelper.Success<object>(null, "Usuario desactivado"));
         }
+
+        [HttpGet("catalogo-roles")]
+        public async Task<IActionResult> ObtenerCatalogoRoles([FromServices] AdminDbContext context)
+        {
+            var roles = await context.Roles
+                .Select(r => new RoleDto
+                {
+                    Id = r.Id,
+                    Nombre = r.Descripcion
+                })
+                .ToListAsync();
+
+            return Ok(ResponseHelper.Success(roles, "Catálogo de roles cargado"));
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Actualizar(int id, [FromBody] UsuarioUpdateDto dto)
+        {
+            var actualizado = await _usuarioService.Actualizar(id, dto);
+            if (!actualizado)
+                return NotFound(ResponseHelper.Fail<object>("Usuario no encontrado o no actualizado", 404));
+
+            return Ok(ResponseHelper.Success<object>(null, "Usuario actualizado correctamente"));
+        }
+
+
+
+
     }
 }
