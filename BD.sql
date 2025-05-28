@@ -11,6 +11,7 @@ CREATE TABLE roles (
 );
 
 INSERT INTO roles (id, nombre, descripcion) VALUES
+(1, 'Administrador', 'Administrador del sistema'),
 (2, 'ResponsableBodega', 'Responsable de Bodega'),
 (3, 'EncargadoCompras', 'Encargado de Compras'),
 (4, 'GestorVentas', 'Gestor de Ventas'),
@@ -20,10 +21,8 @@ INSERT INTO roles (id, nombre, descripcion) VALUES
 (8, 'Proveedor', 'Proveedor del sistema');
 
 select * from roles;
+
 -- Usuarios del sistema
-
-select * from usuarios;
-
 
 CREATE TABLE usuarios (
     id SERIAL PRIMARY KEY,
