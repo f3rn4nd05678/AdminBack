@@ -7,6 +7,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using System.Text;
+using AdminBack.Models.Configuracion;
+using MongoDB.Driver;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -81,12 +83,26 @@ builder.Services.AddScoped<IConfiguracionService, ConfiguracionService>();
 builder.Services.AddScoped<IProductoService, ProductoService>();
 builder.Services.AddScoped<IAlmacenService, AlmacenService>();
 builder.Services.AddScoped<IInventarioService, InventarioService>();
+builder.Services.AddScoped<IProveedorMongoService, ProveedorMongoService>();
+builder.Services.AddHttpClient<IProveedorHttpService, ProveedorHttpService>();
+builder.Services.AddScoped<IProveedorService, ProveedorService>();
+builder.Services.AddScoped<IOrdenCompraService, OrdenCompraService>();
 
 
 
 
 
+var mongoSettings = builder.Configuration.GetSection("MongoSettings").Get<MongoSettings>();
+builder.Services.Configure<MongoSettings>(builder.Configuration.GetSection("MongoSettings"));
 
+builder.Services.AddSingleton<IMongoClient>(sp =>
+    new MongoClient(mongoSettings.ConnectionString));
+
+builder.Services.AddScoped(sp =>
+{
+    var client = sp.GetRequiredService<IMongoClient>();
+    return client.GetDatabase(mongoSettings.Database);
+});
 
 // CORS
 builder.Services.AddCors(options =>

@@ -17,27 +17,20 @@ public partial class AdminDbContext : DbContext
     }
 
     public virtual DbSet<Almacene> Almacenes { get; set; }
-
     public virtual DbSet<Cliente> Clientes { get; set; }
-
     public virtual DbSet<ConfiguracionSistema> ConfiguracionSistemas { get; set; }
-
     public virtual DbSet<EntradasInventario> EntradasInventarios { get; set; }
-
     public virtual DbSet<InventarioActual> InventarioActuals { get; set; }
-
     public virtual DbSet<Producto> Productos { get; set; }
-
     public virtual DbSet<Proveedore> Proveedores { get; set; }
-
     public virtual DbSet<Role> Roles { get; set; }
-
     public virtual DbSet<SalidasInventario> SalidasInventarios { get; set; }
-
     public virtual DbSet<Usuario> Usuarios { get; set; }
+    public virtual DbSet<OrdenCompra> OrdenesCompra { get; set; }
+    public virtual DbSet<DetalleOrdenCompra> DetallesOrdenCompra { get; set; }
+
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
         => optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=databaseADMIN;Username=postgres;Password=1234");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -208,6 +201,12 @@ public partial class AdminDbContext : DbContext
             entity.Property(e => e.Telefono)
                 .HasMaxLength(20)
                 .HasColumnName("telefono");
+            entity.Property(e => e.CatalogoUrl)
+                .HasColumnName("catalogo_url");
+
+            entity.Property(e => e.TrackUrl)
+                .HasColumnName("track_url");
+
         });
 
         modelBuilder.Entity<Role>(entity =>
@@ -285,6 +284,44 @@ public partial class AdminDbContext : DbContext
                 .OnDelete(DeleteBehavior.SetNull)
                 .HasConstraintName("usuarios_rol_id_fkey");
         });
+
+        modelBuilder.Entity<OrdenCompra>(entity =>
+        {
+            entity.ToTable("orden_compra");
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.ProveedorId).HasColumnName("proveedor_id");
+            entity.Property(e => e.FechaCreacion).HasColumnName("fecha_creacion");
+            entity.Property(e => e.Estado).HasColumnName("estado");
+            entity.Property(e => e.TotalEstimado).HasColumnName("total_estimado");
+            entity.Property(e => e.Enviada).HasColumnName("enviada");
+
+            entity.HasOne(e => e.Proveedor)
+                  .WithMany()
+                  .HasForeignKey(e => e.ProveedorId);
+        });
+
+        modelBuilder.Entity<DetalleOrdenCompra>(entity =>
+        {
+            entity.ToTable("detalle_orden_compra");
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.OrdenId).HasColumnName("orden_id");
+            entity.Property(e => e.ProductoId).HasColumnName("producto_id");
+            entity.Property(e => e.Cantidad).HasColumnName("cantidad");
+            entity.Property(e => e.PrecioUnitario).HasColumnName("precio_unitario");
+
+            entity.HasOne(e => e.Orden)
+                  .WithMany(o => o.Detalles)
+                  .HasForeignKey(e => e.OrdenId);
+
+            entity.HasOne(e => e.Producto)
+                  .WithMany()
+                  .HasForeignKey(e => e.ProductoId);
+        });
+
 
         OnModelCreatingPartial(modelBuilder);
     }

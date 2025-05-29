@@ -18,4 +18,6 @@ public partial class Proveedore
     public string? Telefono { get; set; }
 
     public bool? Activo { get; set; }
+    public string? CatalogoUrl { get; set; }
+    public string? TrackUrl { get; set; }
 }
