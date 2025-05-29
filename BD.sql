@@ -20,8 +20,6 @@ INSERT INTO roles (id, nombre, descripcion) VALUES
 (7, 'Cliente', 'Cliente del sistema'),
 (8, 'Proveedor', 'Proveedor del sistema');
 
-select * from roles;
-
 -- Usuarios del sistema
 
 CREATE TABLE usuarios (
@@ -335,6 +333,41 @@ INSERT INTO configuracion_sistema (clave, valor, descripcion) VALUES
 ('porcentaje_iva', '12', 'Porcentaje de IVA aplicable'),
 ('stock_reservado_automatico', 'true', 'Reserva automática de stock en pedidos'),
 ('version_sistema', '1.0.0', 'Versión actual del sistema');
+
+
+
+-----------------ESCRIPTS 27/05
+INSERT INTO acciones (nombre, modulo_id) VALUES
+('Gestionar productos', 2),
+('Gestionar almacenes', 2);
+
+
+-- Responsable de Bodega (si se permite)
+INSERT INTO permisos (rol_id, accion_id)
+SELECT 2, id FROM acciones WHERE nombre IN ('Gestionar productos', 'Gestionar almacenes');
+
+
+-----------------ESCRIPTS 28/05
+ALTER TABLE proveedores ADD COLUMN catalogo_url TEXT;
+ALTER TABLE proveedores ADD COLUMN track_url TEXT;
+
+
+CREATE TABLE orden_compra (
+    id SERIAL PRIMARY KEY,
+    proveedor_id INT NOT NULL REFERENCES proveedores(id),
+    fecha_creacion TIMESTAMP DEFAULT NOW(),
+    estado VARCHAR(20) DEFAULT 'Pendiente',
+    total_estimado DECIMAL(12,2),
+    enviada BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE detalle_orden_compra (
+    id SERIAL PRIMARY KEY,
+    orden_id INT NOT NULL REFERENCES orden_compra(id) ON DELETE CASCADE,
+    producto_id INT NOT NULL REFERENCES productos(id),
+    cantidad DECIMAL(12,2) NOT NULL,
+    precio_unitario DECIMAL(12,2) NOT NULL
+);
 
 
 
