@@ -337,6 +337,8 @@ public partial class AdminDbContext : DbContext
             entity.Property(e => e.Fecha).HasColumnName("fecha");
             entity.Property(e => e.Estado).HasColumnName("estado");
             entity.Property(e => e.Total).HasColumnName("total");
+            entity.Property(e => e.FacturaIdMongo).HasColumnName("factura_id_mongo");
+
 
             entity.HasOne(e => e.Cliente)
                   .WithMany()

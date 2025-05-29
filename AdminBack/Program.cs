@@ -89,6 +89,8 @@ builder.Services.AddScoped<IProveedorService, ProveedorService>();
 builder.Services.AddScoped<IOrdenCompraService, OrdenCompraService>();
 builder.Services.AddScoped<IClienteService, ClienteService>();
 builder.Services.AddScoped<IPedidoClienteService, PedidoClienteService>();
+builder.Services.AddScoped<IFacturaVentaService, FacturaVentaService>();
+
 
 
 var mongoSettings = builder.Configuration.GetSection("MongoSettings").Get<MongoSettings>();
