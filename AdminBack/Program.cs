@@ -92,6 +92,7 @@ builder.Services.AddScoped<IOrdenCompraService, OrdenCompraService>();
 
 
 
+
 var mongoSettings = builder.Configuration.GetSection("MongoSettings").Get<MongoSettings>();
 builder.Services.Configure<MongoSettings>(builder.Configuration.GetSection("MongoSettings"));
 

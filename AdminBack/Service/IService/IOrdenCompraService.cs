@@ -6,8 +6,6 @@ namespace AdminBack.Service.IService
     {
         Task<List<OrdenCompraDto>> ObtenerTodas();
         Task<bool> Crear(OrdenCompraCreateDto dto);
-        Task<bool> Aprobar(int id);
-        Task<bool> Aprobar(int id, int almacenId);
-
+        Task<bool> Aprobar(int id, int almacenId); 
     }
 }

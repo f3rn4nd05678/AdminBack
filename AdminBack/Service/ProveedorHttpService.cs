@@ -40,5 +40,21 @@ namespace AdminBack.Service
             var productos = JsonConvert.DeserializeObject<List<ProductoCatalogoProveedorDto>>(contenidoJson);
             return productos ?? new();
         }
+        public async Task<object?> ConsultarTracking(int proveedorId, int ordenId)
+        {
+            var proveedor = await _context.Proveedores.FindAsync(proveedorId);
+            if (proveedor == null || string.IsNullOrWhiteSpace(proveedor.TrackUrl))
+                throw new Exception("Proveedor sin URL de tracking");
+
+            var fullUrl = $"{proveedor.TrackUrl}/{ordenId}";
+
+            var response = await _httpClient.GetAsync(fullUrl);
+            var content = await response.Content.ReadAsStringAsync();
+            var json = JsonConvert.DeserializeObject<object>(content);
+
+            await _mongoService.GuardarTracking(proveedor.Nombre, ordenId.ToString(), json!);
+            return json;
+        }
+
     }
 }

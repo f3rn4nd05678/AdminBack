@@ -46,5 +46,20 @@ namespace AdminBack.Controllers
                 return BadRequest(ResponseHelper.Fail<object>($"Error: {ex.Message}"));
             }
         }
+
+        [HttpGet("{id}/track")]
+        public async Task<IActionResult> Track(int id, [FromQuery] int ordenId, [FromServices] IProveedorHttpService httpService)
+        {
+            try
+            {
+                var result = await httpService.ConsultarTracking(id, ordenId);
+                return Ok(ResponseHelper.Success(result));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ResponseHelper.Fail<object>(ex.Message));
+            }
+        }
+
     }
 }

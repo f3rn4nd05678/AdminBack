@@ -20,4 +20,6 @@ public partial class Proveedore
     public bool? Activo { get; set; }
     public string? CatalogoUrl { get; set; }
     public string? TrackUrl { get; set; }
+    public string? OrdenUrl { get; set; } 
+
 }

@@ -3,17 +3,29 @@ using AdminBack.Models;
 using AdminBack.Models.DTOs.OrdenCompra;
 using AdminBack.Service.IService;
 using Microsoft.EntityFrameworkCore;
+using MongoDB.Bson;
+using MongoDB.Bson.IO;
+using System.Text;
+using Newtonsoft.Json;
 
 namespace AdminBack.Service
 {
     public class OrdenCompraService : IOrdenCompraService
     {
         private readonly AdminDbContext _context;
+        private readonly HttpClient _httpClient;
+        private readonly IProveedorMongoService _mongoService;
 
-        public OrdenCompraService(AdminDbContext context)
+        public OrdenCompraService(
+            AdminDbContext context,
+            HttpClient httpClient,
+            IProveedorMongoService mongoService)
         {
             _context = context;
+            _httpClient = httpClient;
+            _mongoService = mongoService;
         }
+
 
         public async Task<List<OrdenCompraDto>> ObtenerTodas()
         {
@@ -66,37 +78,6 @@ namespace AdminBack.Service
             return await _context.SaveChangesAsync() > 0;
         }
 
-        public async Task<bool> Aprobar(int id)
-        {
-            var orden = await _context.OrdenesCompra
-                .Include(o => o.Detalles)
-                .FirstOrDefaultAsync(o => o.Id == id);
-
-            if (orden == null || orden.Estado != "Pendiente")
-                return false;
-
-            orden.Estado = "Aprobada";
-
-            // Simular entrada al inventario
-            foreach (var d in orden.Detalles)
-            {
-                var inventario = await _context.InventarioActuals.FirstOrDefaultAsync(i =>
-                    i.ProductoId == d.ProductoId && i.AlmacenId == 1); // suponiendo almacén fijo
-
-                if (inventario != null)
-                    inventario.Cantidad += d.Cantidad;
-                else
-                    _context.InventarioActuals.Add(new InventarioActual
-                    {
-                        ProductoId = d.ProductoId,
-                        AlmacenId = 1,
-                        Cantidad = d.Cantidad
-                    });
-            }
-
-            return await _context.SaveChangesAsync() > 0;
-        }
-
         public async Task<bool> Aprobar(int id, int almacenId)
         {
             var orden = await _context.OrdenesCompra
@@ -107,11 +88,39 @@ namespace AdminBack.Service
                 return false;
 
             orden.Estado = "Aprobada";
+            var proveedor = await _context.Proveedores.FindAsync(orden.ProveedorId);
+
+            if (!string.IsNullOrWhiteSpace(proveedor?.OrdenUrl))
+            {
+                var payload = new
+                {
+                    ordenId = orden.Id,
+                    productos = orden.Detalles.Select(d => new
+                    {
+                        productoId = d.ProductoId,
+                        cantidad = d.Cantidad,
+                        precio = d.PrecioUnitario
+                    })
+                };
+
+                var jsonString = Newtonsoft.Json.JsonConvert.SerializeObject(payload);
+                var jsonPayload = new StringContent(jsonString, Encoding.UTF8, "application/json");
+
+
+
+                var response = await _httpClient.PostAsync(proveedor.OrdenUrl, jsonPayload);
+                var content = await response.Content.ReadAsStringAsync();
+                var respuestaRaw = Newtonsoft.Json.JsonConvert.DeserializeObject<object>(content);
+
+                await _mongoService.GuardarOrdenEnviada(proveedor.Nombre, payload, respuestaRaw!);
+
+                orden.Enviada = true;
+            }
 
             foreach (var d in orden.Detalles)
             {
                 var inventario = await _context.InventarioActuals.FirstOrDefaultAsync(i =>
-                    i.ProductoId == d.ProductoId && i.AlmacenId == almacenId);
+                    i.ProductoId == d.ProductoId && i.AlmacenId == almacenId); 
 
                 if (inventario != null)
                     inventario.Cantidad += d.Cantidad;
@@ -119,7 +128,7 @@ namespace AdminBack.Service
                     _context.InventarioActuals.Add(new InventarioActual
                     {
                         ProductoId = d.ProductoId,
-                        AlmacenId = almacenId,
+                        AlmacenId = 1,
                         Cantidad = d.Cantidad
                     });
             }

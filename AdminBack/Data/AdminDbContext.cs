@@ -203,9 +203,11 @@ public partial class AdminDbContext : DbContext
                 .HasColumnName("telefono");
             entity.Property(e => e.CatalogoUrl)
                 .HasColumnName("catalogo_url");
-
             entity.Property(e => e.TrackUrl)
                 .HasColumnName("track_url");
+            entity.Property(e => e.OrdenUrl)
+                .HasColumnName("orden_url");
+
 
         });
 
