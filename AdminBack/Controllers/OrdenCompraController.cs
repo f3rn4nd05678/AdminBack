@@ -44,7 +44,5 @@ namespace AdminBack.Controllers
                 : BadRequest(ResponseHelper.Fail<object>("No se pudo aprobar la orden"));
         }
 
-
-
     }
 }

@@ -35,26 +35,30 @@ namespace AdminBack.Service
 
             await _mongoService.GuardarCatalogo(proveedor.Nombre, respuestaRaw!);
 
-            // Simulación de mapeo a DTO (esto depende del proveedor)
-            // Puedes ajustarlo según el formato real
             var productos = JsonConvert.DeserializeObject<List<ProductoCatalogoProveedorDto>>(contenidoJson);
             return productos ?? new();
         }
         public async Task<object?> ConsultarTracking(int proveedorId, int ordenId)
         {
             var proveedor = await _context.Proveedores.FindAsync(proveedorId);
+
             if (proveedor == null || string.IsNullOrWhiteSpace(proveedor.TrackUrl))
-                throw new Exception("Proveedor sin URL de tracking");
+                throw new Exception("Proveedor no válido o sin TrackUrl");
 
-            var fullUrl = $"{proveedor.TrackUrl}/{ordenId}";
-
+            var fullUrl = $"{proveedor.TrackUrl.TrimEnd('/')}/{ordenId}";
             var response = await _httpClient.GetAsync(fullUrl);
-            var content = await response.Content.ReadAsStringAsync();
-            var json = JsonConvert.DeserializeObject<object>(content);
 
-            await _mongoService.GuardarTracking(proveedor.Nombre, ordenId.ToString(), json!);
-            return json;
+            if (!response.IsSuccessStatusCode)
+                throw new Exception($"Error al contactar proveedor: {response.StatusCode}");
+
+            var json = await response.Content.ReadAsStringAsync();
+            var deserialized = Newtonsoft.Json.JsonConvert.DeserializeObject<object>(json);
+
+            await _mongoService.GuardarTracking(proveedor.Nombre, ordenId.ToString(), deserialized!);
+
+            return deserialized;
         }
+
 
     }
 }

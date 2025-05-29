@@ -3,16 +3,20 @@ using AdminBack.Models;
 using AdminBack.Models.DTOs.Proveedor;
 using AdminBack.Service.IService;
 using Microsoft.EntityFrameworkCore;
+using MongoDB.Bson;
+using MongoDB.Driver;
 
 namespace AdminBack.Service
 {
     public class ProveedorService : IProveedorService
     {
         private readonly AdminDbContext _context;
+        private readonly IMongoDatabase _database;
 
-        public ProveedorService(AdminDbContext context)
+        public ProveedorService(AdminDbContext context, IMongoDatabase database)
         {
             _context = context;
+            _database = database;
         }
 
         public async Task<List<ProveedorDto>> ObtenerTodos()
@@ -69,5 +73,20 @@ namespace AdminBack.Service
             proveedor.Activo = false;
             return await _context.SaveChangesAsync() > 0;
         }
+
+        public async Task GuardarTracking(string proveedor, string ordenId, object respuesta)
+        {
+            var doc = new BsonDocument
+    {
+        { "proveedor", proveedor },
+        { "ordenId", ordenId },
+        { "fechaConsulta", DateTime.UtcNow },
+        { "respuesta", BsonDocument.Parse(Newtonsoft.Json.JsonConvert.SerializeObject(respuesta)) }
+    };
+
+            var collection = _database.GetCollection<BsonDocument>("TrackingProveedor");
+            await collection.InsertOneAsync(doc);
+        }
+
     }
 }
