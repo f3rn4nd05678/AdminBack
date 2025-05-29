@@ -88,10 +88,7 @@ builder.Services.AddHttpClient<IProveedorHttpService, ProveedorHttpService>();
 builder.Services.AddScoped<IProveedorService, ProveedorService>();
 builder.Services.AddScoped<IOrdenCompraService, OrdenCompraService>();
 builder.Services.AddScoped<IClienteService, ClienteService>();
-
-
-
-
+builder.Services.AddScoped<IPedidoClienteService, PedidoClienteService>();
 
 
 var mongoSettings = builder.Configuration.GetSection("MongoSettings").Get<MongoSettings>();

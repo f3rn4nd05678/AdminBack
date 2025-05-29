@@ -28,6 +28,9 @@ public partial class AdminDbContext : DbContext
     public virtual DbSet<Usuario> Usuarios { get; set; }
     public virtual DbSet<OrdenCompra> OrdenesCompra { get; set; }
     public virtual DbSet<DetalleOrdenCompra> DetallesOrdenCompra { get; set; }
+    public virtual DbSet<PedidoCliente> PedidosCliente { get; set; }
+    public virtual DbSet<DetallePedidoCliente> DetallesPedidoCliente { get; set; }
+
 
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -323,6 +326,43 @@ public partial class AdminDbContext : DbContext
                   .WithMany()
                   .HasForeignKey(e => e.ProductoId);
         });
+
+        modelBuilder.Entity<PedidoCliente>(entity =>
+        {
+            entity.ToTable("pedido_cliente");
+
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.ClienteId).HasColumnName("cliente_id");
+            entity.Property(e => e.Fecha).HasColumnName("fecha");
+            entity.Property(e => e.Estado).HasColumnName("estado");
+            entity.Property(e => e.Total).HasColumnName("total");
+
+            entity.HasOne(e => e.Cliente)
+                  .WithMany()
+                  .HasForeignKey(e => e.ClienteId);
+        });
+
+        modelBuilder.Entity<DetallePedidoCliente>(entity =>
+        {
+            entity.ToTable("detalle_pedido_cliente");
+
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.PedidoId).HasColumnName("pedido_id");
+            entity.Property(e => e.ProductoId).HasColumnName("producto_id");
+            entity.Property(e => e.Cantidad).HasColumnName("cantidad");
+            entity.Property(e => e.PrecioUnitario).HasColumnName("precio_unitario");
+
+            entity.HasOne(e => e.Pedido)
+                  .WithMany(p => p.Detalles)
+                  .HasForeignKey(e => e.PedidoId);
+
+            entity.HasOne(e => e.Producto)
+                  .WithMany()
+                  .HasForeignKey(e => e.ProductoId);
+        });
+
 
 
         OnModelCreatingPartial(modelBuilder);
