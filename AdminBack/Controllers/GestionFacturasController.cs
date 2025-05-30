@@ -12,10 +12,12 @@ namespace AdminBack.Controllers
     public class GestionFacturasController : ControllerBase
     {
         private readonly INotaCreditoService _notaService;
+        private readonly IGestionFacturasService _gestionService;
 
-        public GestionFacturasController(INotaCreditoService notaService)
+        public GestionFacturasController(INotaCreditoService notaService, IGestionFacturasService gestionService)
         {
             _notaService = notaService;
+            _gestionService = gestionService;
         }
 
         // POST: api/GestionFacturas/notas-credito
@@ -34,6 +36,22 @@ namespace AdminBack.Controllers
         {
             var notas = await _notaService.ObtenerPorPedido(pedidoId);
             return Ok(ResponseHelper.Success(notas));
+        }
+
+        [HttpPost("anular/{pedidoId}")]
+        public async Task<IActionResult> Anular(int pedidoId)
+        {
+            var ok = await _gestionService.AnularFactura(pedidoId);
+            return ok
+                ? Ok(ResponseHelper.Success<object>(null, "Factura anulada"))
+                : BadRequest(ResponseHelper.Fail<object>("No se pudo anular o ya está anulada"));
+        }
+
+        [HttpGet("reporte-cliente/{clienteId}")]
+        public async Task<IActionResult> ReportePorCliente(int clienteId)
+        {
+            var data = await _gestionService.ObtenerReportePorCliente(clienteId);
+            return Ok(ResponseHelper.Success(data));
         }
 
 

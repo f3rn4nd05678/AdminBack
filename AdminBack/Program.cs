@@ -93,6 +93,10 @@ builder.Services.AddScoped<IFacturaVentaService, FacturaVentaService>();
 builder.Services.AddScoped<IPagoClienteService, PagoClienteService>();
 builder.Services.AddScoped<IReporteService, ReporteService>();
 builder.Services.AddScoped<INotaCreditoService, NotaCreditoService>();
+builder.Services.AddScoped<IGestionFacturasService, GestionFacturasService>();
+builder.Services.AddScoped<IFinanzasService, FinanzasService>();
+
+
 
 
 
