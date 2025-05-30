@@ -96,12 +96,8 @@ builder.Services.AddScoped<INotaCreditoService, NotaCreditoService>();
 builder.Services.AddScoped<IGestionFacturasService, GestionFacturasService>();
 builder.Services.AddScoped<IFinanzasService, FinanzasService>();
 builder.Services.AddScoped<IPagoProveedorService, PagoProveedorService>();
-
-
-
-
-
-
+builder.Services.AddScoped<ITransportistaService, TransportistaService>();
+builder.Services.AddScoped<IEntregaService, EntregaService>();
 
 
 

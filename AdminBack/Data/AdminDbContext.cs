@@ -33,6 +33,10 @@ public partial class AdminDbContext : DbContext
     public virtual DbSet<PagoCliente> PagosCliente { get; set; }
     public virtual DbSet<NotaCredito> NotasCredito { get; set; }
     public virtual DbSet<PagoProveedor> PagosProveedor { get; set; }
+    public virtual DbSet<Transportista> Transportistas { get; set; }
+    public virtual DbSet<RutaEntrega> RutaEntregas { get; set; }
+    public virtual DbSet<EntregaPedido> EntregaPedidos { get; set; }
+
 
 
 
@@ -419,7 +423,53 @@ public partial class AdminDbContext : DbContext
                   .HasForeignKey(e => e.OrdenId);
         });
 
+        modelBuilder.Entity<Transportista>(entity =>
+        {
+            entity.ToTable("transportistas");
 
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Nombre).HasColumnName("nombre").HasMaxLength(100);
+            entity.Property(e => e.Telefono).HasColumnName("telefono").HasMaxLength(20);
+            entity.Property(e => e.Activo).HasColumnName("activo").HasDefaultValue(true);
+        });
+
+        modelBuilder.Entity<RutaEntrega>(entity =>
+        {
+            entity.ToTable("ruta_entrega");
+
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Nombre).HasColumnName("nombre").HasMaxLength(100);
+            entity.Property(e => e.Descripcion).HasColumnName("descripcion");
+            entity.Property(e => e.Fecha).HasColumnName("fecha").HasDefaultValueSql("now()");
+        });
+
+
+        modelBuilder.Entity<EntregaPedido>(entity =>
+        {
+            entity.ToTable("entrega_pedido");
+
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.PedidoId).HasColumnName("pedido_id");
+            entity.Property(e => e.TransportistaId).HasColumnName("transportista_id");
+            entity.Property(e => e.RutaId).HasColumnName("ruta_id");
+            entity.Property(e => e.Estado).HasColumnName("estado").HasDefaultValue("Pendiente");
+            entity.Property(e => e.FechaAsignacion).HasColumnName("fecha_asignacion").HasDefaultValueSql("now()");
+
+            entity.HasOne(e => e.Pedido)
+                .WithMany()
+                .HasForeignKey(e => e.PedidoId);
+
+            entity.HasOne(e => e.Transportista)
+                .WithMany(t => t.Entregas)
+                .HasForeignKey(e => e.TransportistaId);
+
+            entity.HasOne(e => e.Ruta)
+                .WithMany(r => r.Entregas)
+                .HasForeignKey(e => e.RutaId);
+        });
 
 
 
