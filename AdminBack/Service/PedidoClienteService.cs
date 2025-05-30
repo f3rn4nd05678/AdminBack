@@ -41,7 +41,7 @@ namespace AdminBack.Service
 
         public async Task<bool> Crear(PedidoClienteCreateDto dto, int usuarioId, int almacenId)
         {
-            // Validar stock
+
             foreach (var item in dto.Detalles)
             {
                 var stock = await _context.InventarioActuals
@@ -51,7 +51,7 @@ namespace AdminBack.Service
                     throw new Exception($"Stock insuficiente para producto {item.ProductoId}");
             }
 
-            // Crear pedido
+
             var pedido = new PedidoCliente
             {
                 ClienteId = dto.ClienteId,
@@ -63,7 +63,7 @@ namespace AdminBack.Service
             _context.PedidosCliente.Add(pedido);
             await _context.SaveChangesAsync();
 
-            // Detalles
+
             var detalles = dto.Detalles.Select(d => new DetallePedidoCliente
             {
                 PedidoId = pedido.Id,
@@ -74,7 +74,6 @@ namespace AdminBack.Service
 
             _context.DetallesPedidoCliente.AddRange(detalles);
 
-            // Salidas de inventario
             foreach (var d in detalles)
             {
                 _context.SalidasInventarios.Add(new SalidasInventario

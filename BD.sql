@@ -75,6 +75,8 @@ CREATE TABLE clientes (
     activo BOOLEAN DEFAULT TRUE
 );
 
+select * from clientes;
+
 -- Proveedores
 CREATE TABLE proveedores (
     id SERIAL PRIMARY KEY,
@@ -368,6 +370,90 @@ CREATE TABLE detalle_orden_compra (
     cantidad DECIMAL(12,2) NOT NULL,
     precio_unitario DECIMAL(12,2) NOT NULL
 );
+
+ALTER TABLE proveedores ADD COLUMN orden_url TEXT;
+
+
+CREATE TABLE pedido_cliente (
+    id SERIAL PRIMARY KEY,
+    cliente_id INT NOT NULL REFERENCES clientes(id),
+    fecha TIMESTAMP DEFAULT NOW(),
+    estado VARCHAR(20) DEFAULT 'Pendiente',
+    total DECIMAL(12,2)
+);
+
+
+CREATE TABLE detalle_pedido_cliente (
+    id SERIAL PRIMARY KEY,
+    pedido_id INT NOT NULL REFERENCES pedido_cliente(id) ON DELETE CASCADE,
+    producto_id INT NOT NULL REFERENCES productos(id),
+    cantidad DECIMAL(12,2) NOT NULL,
+    precio_unitario DECIMAL(12,2) NOT NULL
+);
+
+ALTER TABLE pedido_cliente ADD COLUMN factura_id_mongo TEXT;
+
+
+-----------------ESCRIPTS 29/05
+CREATE TABLE pagos_cliente (
+    id SERIAL PRIMARY KEY,
+    pedido_id INT NOT NULL REFERENCES pedido_cliente(id),
+    monto DECIMAL(12,2) NOT NULL,
+    fecha_pago TIMESTAMP DEFAULT NOW(),
+    referencia TEXT
+);
+
+
+CREATE TABLE notas_credito (
+    id SERIAL PRIMARY KEY,
+    pedido_id INT NOT NULL REFERENCES pedido_cliente(id),
+    monto DECIMAL(12,2) NOT NULL,
+    motivo TEXT NOT NULL,
+    fecha TIMESTAMP DEFAULT NOW()
+);
+
+
+CREATE TABLE pagos_proveedor (
+    id SERIAL PRIMARY KEY,
+    orden_id INT NOT NULL REFERENCES orden_compra(id),
+    monto DECIMAL(12,2) NOT NULL,
+    fecha_pago TIMESTAMP DEFAULT NOW(),
+    referencia TEXT
+);
+
+
+CREATE TABLE transportistas (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(100),
+    telefono VARCHAR(20),
+    activo BOOLEAN DEFAULT TRUE
+);
+
+
+CREATE TABLE ruta_entrega (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(100),
+    descripcion TEXT,
+    fecha TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE entrega_pedido (
+    id SERIAL PRIMARY KEY,
+    pedido_id INT REFERENCES pedido_cliente(id),
+    transportista_id INT REFERENCES transportistas(id),
+    ruta_id INT REFERENCES ruta_entrega(id),
+    estado VARCHAR(30) DEFAULT 'Pendiente',
+    fecha_asignacion TIMESTAMP DEFAULT NOW()
+);
+
+
+
+
+
+
+
+
+
 
 
 

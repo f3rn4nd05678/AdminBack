@@ -37,15 +37,6 @@ public partial class AdminDbContext : DbContext
     public virtual DbSet<RutaEntrega> RutaEntregas { get; set; }
     public virtual DbSet<EntregaPedido> EntregaPedidos { get; set; }
 
-
-
-
-
-
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=databaseADMIN;Username=postgres;Password=1234");
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Almacene>(entity =>

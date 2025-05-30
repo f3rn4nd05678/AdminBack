@@ -66,13 +66,11 @@ namespace AdminBack.Service
                 observaciones = "Gracias por su compra"
             };
 
-            // Guardar en Mongo
             var json = JsonConvert.SerializeObject(factura);
             var doc = BsonDocument.Parse(json);
             var collection = _mongo.GetCollection<BsonDocument>("FacturaVenta");
             await collection.InsertOneAsync(doc);
 
-            // Guardar id en relacional
             pedido.FacturaIdMongo = doc["_id"].ToString();
             await _context.SaveChangesAsync();
 
