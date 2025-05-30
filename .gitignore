@@ -8,7 +8,7 @@
 *.orig
 *.xml
 *.~vsd
-*.zip
+
 *.sublime-project
 *.sublime-workspace
 *.exe
