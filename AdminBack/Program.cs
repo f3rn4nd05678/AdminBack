@@ -90,6 +90,12 @@ builder.Services.AddScoped<IOrdenCompraService, OrdenCompraService>();
 builder.Services.AddScoped<IClienteService, ClienteService>();
 builder.Services.AddScoped<IPedidoClienteService, PedidoClienteService>();
 builder.Services.AddScoped<IFacturaVentaService, FacturaVentaService>();
+builder.Services.AddScoped<IPagoClienteService, PagoClienteService>();
+builder.Services.AddScoped<IReporteService, ReporteService>();
+builder.Services.AddScoped<INotaCreditoService, NotaCreditoService>();
+
+
+
 
 
 

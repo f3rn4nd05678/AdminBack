@@ -30,6 +30,10 @@ public partial class AdminDbContext : DbContext
     public virtual DbSet<DetalleOrdenCompra> DetallesOrdenCompra { get; set; }
     public virtual DbSet<PedidoCliente> PedidosCliente { get; set; }
     public virtual DbSet<DetallePedidoCliente> DetallesPedidoCliente { get; set; }
+    public virtual DbSet<PagoCliente> PagosCliente { get; set; }
+    public virtual DbSet<NotaCredito> NotasCredito { get; set; }
+
+
 
 
 
@@ -364,6 +368,40 @@ public partial class AdminDbContext : DbContext
                   .WithMany()
                   .HasForeignKey(e => e.ProductoId);
         });
+
+        modelBuilder.Entity<PagoCliente>(entity =>
+        {
+            entity.ToTable("pagos_cliente");
+
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.PedidoId).HasColumnName("pedido_id");
+            entity.Property(e => e.Monto).HasColumnName("monto");
+            entity.Property(e => e.FechaPago).HasColumnName("fecha_pago");
+            entity.Property(e => e.Referencia).HasColumnName("referencia");
+
+            entity.HasOne(e => e.Pedido)
+                  .WithMany()
+                  .HasForeignKey(e => e.PedidoId);
+        });
+
+        modelBuilder.Entity<NotaCredito>(entity =>
+        {
+            entity.ToTable("notas_credito");
+
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.PedidoId).HasColumnName("pedido_id");
+            entity.Property(e => e.Monto).HasColumnName("monto");
+            entity.Property(e => e.Motivo).HasColumnName("motivo");
+            entity.Property(e => e.Fecha).HasColumnName("fecha");
+
+            entity.HasOne(e => e.Pedido)
+                  .WithMany()
+                  .HasForeignKey(e => e.PedidoId);
+        });
+
+
 
 
 
