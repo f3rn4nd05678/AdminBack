@@ -107,6 +107,45 @@ namespace AdminBack.Service
             return resultado;
         }
 
+        public async Task<List<DashboardProveedorDto>> ObtenerResumenPorProveedor(DateTime inicio, DateTime fin)
+        {
+            var ordenes = await _context.OrdenesCompra
+                .Include(o => o.Proveedor)
+                .Where(o => o.FechaCreacion >= inicio && o.FechaCreacion <= fin)
+                .ToListAsync();
+
+            var pagos = await _context.PagosProveedor
+                .Include(p => p.Orden)
+                .ThenInclude(o => o.Proveedor)
+                .Where(p => p.FechaPago >= inicio && p.FechaPago <= fin)
+                .ToListAsync();
+
+            var resumen = ordenes
+                .GroupBy(o => o.Proveedor.Nombre)
+                .Select(g =>
+                {
+                    var proveedor = g.Key;
+                    var totalOrdenado = g.Sum(o => o.TotalEstimado);
+
+                    var pagado = pagos
+                        .Where(p => p.Orden.Proveedor.Nombre == proveedor)
+                        .Sum(p => p.Monto);
+
+                    return new DashboardProveedorDto
+                    {
+                        Proveedor = proveedor,
+                        TotalOrdenado = totalOrdenado,
+                        TotalPagado = pagado,
+                        Pendiente = totalOrdenado - pagado
+                    };
+                })
+                .OrderByDescending(r => r.Pendiente)
+                .ToList();
+
+            return resumen;
+        }
+
+
     }
 
 }

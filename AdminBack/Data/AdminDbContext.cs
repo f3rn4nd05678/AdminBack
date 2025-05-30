@@ -32,6 +32,8 @@ public partial class AdminDbContext : DbContext
     public virtual DbSet<DetallePedidoCliente> DetallesPedidoCliente { get; set; }
     public virtual DbSet<PagoCliente> PagosCliente { get; set; }
     public virtual DbSet<NotaCredito> NotasCredito { get; set; }
+    public virtual DbSet<PagoProveedor> PagosProveedor { get; set; }
+
 
 
 
@@ -399,6 +401,22 @@ public partial class AdminDbContext : DbContext
             entity.HasOne(e => e.Pedido)
                   .WithMany()
                   .HasForeignKey(e => e.PedidoId);
+        });
+
+        modelBuilder.Entity<PagoProveedor>(entity =>
+        {
+            entity.ToTable("pagos_proveedor");
+
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.OrdenId).HasColumnName("orden_id");
+            entity.Property(e => e.Monto).HasColumnName("monto");
+            entity.Property(e => e.FechaPago).HasColumnName("fecha_pago");
+            entity.Property(e => e.Referencia).HasColumnName("referencia");
+
+            entity.HasOne(e => e.Orden)
+                  .WithMany()
+                  .HasForeignKey(e => e.OrdenId);
         });
 
 

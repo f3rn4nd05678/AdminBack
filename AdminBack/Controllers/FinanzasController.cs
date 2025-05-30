@@ -31,5 +31,12 @@ namespace AdminBack.Controllers
             return Ok(ResponseHelper.Success(data));
         }
 
+        [HttpGet("dashboard/proveedores")]
+        public async Task<IActionResult> GetProveedores([FromQuery] DateTime inicio, [FromQuery] DateTime fin)
+        {
+            var data = await _service.ObtenerResumenPorProveedor(inicio, fin);
+            return Ok(ResponseHelper.Success(data));
+        }
+
     }
 }
