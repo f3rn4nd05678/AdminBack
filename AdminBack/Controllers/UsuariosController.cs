@@ -12,7 +12,7 @@ namespace AdminBack.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Administrador")]
+    //[Authorize(Roles = "Administrador")]
     public class UsuariosController : ControllerBase
     {
         private readonly IUsuarioService _usuarioService;

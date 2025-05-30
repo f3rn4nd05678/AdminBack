@@ -23,31 +23,40 @@ namespace AdminBack.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto login)
         {
-            var user = await _context.Usuarios
-            .Include(u => u.Rol)
-            .FirstOrDefaultAsync(u => u.Email == login.Email);
-
-            if (user == null || !PasswordHelper.VerifyPassword(login.Contrasena, user.Contrasena))
+            try
             {
-                return Unauthorized(ResponseHelper.Fail<object>("Credenciales inválidas", 401));
-            }
+                var user = await _context.Usuarios
+                    .Include(u => u.Rol)
+                    .FirstOrDefaultAsync(u => u.Email == login.Email);
 
-            var token = _authService.GenerateToken(user);
-
-            var result = new
-            {
-                Token = token,
-                Usuario = new
+                if (user == null || string.IsNullOrEmpty(user.Contrasena) || !PasswordHelper.VerifyPassword(login.Contrasena, user.Contrasena))
                 {
-                    user.Id,
-                    user.NombreCompleto,
-                    user.Email,
-                    Rol = user.Rol?.Nombre
+                    return Unauthorized(ResponseHelper.Fail<object>("Credenciales inválidas", 401));
                 }
-            };
 
-            return Ok(ResponseHelper.Success(result));
+                var token = _authService.GenerateToken(user);
+
+                var result = new
+                {
+                    Token = token,
+                    Usuario = new
+                    {
+                        user.Id,
+                        user.NombreCompleto,
+                        user.Email,
+                        Rol = user.Rol?.Nombre
+                    }
+                };
+
+                return Ok(ResponseHelper.Success(result));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ERROR: {ex.Message} \nSTACK: {ex.StackTrace}");
+                return StatusCode(500, ResponseHelper.Fail<object>("Error interno en el servidor: " + ex.Message, 500));
+            }
         }
+
 
 
     }
