@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using System.Text;
 using AdminBack.Models.Configuracion;
 using MongoDB.Driver;
+using Microsoft.AspNetCore.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -129,11 +130,11 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 
-if (app.Environment.IsDevelopment())
-{
+//if (app.Environment.IsDevelopment())
+//{
     app.UseSwagger();
     app.UseSwaggerUI();
-}
+//}
 
 app.UseStatusCodePages(async context =>
 {
@@ -152,6 +153,13 @@ app.UseStatusCodePages(async context =>
     }
 });
 
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+
+
+
 app.UseExceptionHandler(errorApp =>
 {
     errorApp.Run(async context =>
@@ -159,12 +167,16 @@ app.UseExceptionHandler(errorApp =>
         context.Response.StatusCode = 500;
         context.Response.ContentType = "application/json";
 
+        var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
+        var exception = exceptionHandlerPathFeature?.Error;
+
         var response = new
         {
             statusCode = 500,
             isSuccess = false,
             message = "Error interno del servidor",
-            detail = (object)null
+            detail = exception?.Message,
+            stackTrace = exception?.StackTrace
         };
 
         await context.Response.WriteAsync(JsonConvert.SerializeObject(response));

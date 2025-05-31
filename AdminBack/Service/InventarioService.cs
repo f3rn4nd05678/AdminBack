@@ -47,7 +47,7 @@ namespace AdminBack.Service
                     Producto = e.Producto.Nombre,
                     Almacen = e.Almacen.Nombre,
                     Cantidad = e.Cantidad,
-                    FechaEntrada = e.FechaEntrada ?? DateTime.MinValue,
+                    FechaEntrada = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc),
                     Referencia = e.Referencia,
                     Usuario = e.Usuario != null ? e.Usuario.NombreCompleto : "Sistema"
                 })
@@ -76,37 +76,54 @@ namespace AdminBack.Service
 
         public async Task<bool> RegistrarEntrada(EntradaInventarioCreateDto dto, int usuarioId)
         {
-            var entrada = new EntradasInventario
-            {
-                ProductoId = dto.ProductoId,
-                AlmacenId = dto.AlmacenId,
-                Cantidad = dto.Cantidad,
-                FechaEntrada = DateTime.UtcNow,
-                Referencia = dto.Referencia,
-                UsuarioId = usuarioId
-            };
+            await using var transaction = await _context.Database.BeginTransactionAsync();
 
-            _context.EntradasInventarios.Add(entrada);
-
-            var inventario = await _context.InventarioActuals.FirstOrDefaultAsync(i =>
-                i.ProductoId == dto.ProductoId && i.AlmacenId == dto.AlmacenId);
-
-            if (inventario != null)
+            try
             {
-                inventario.Cantidad += dto.Cantidad;
-            }
-            else
-            {
-                _context.InventarioActuals.Add(new InventarioActual
+                var entrada = new EntradasInventario
                 {
                     ProductoId = dto.ProductoId,
                     AlmacenId = dto.AlmacenId,
-                    Cantidad = dto.Cantidad
-                });
-            }
+                    Cantidad = dto.Cantidad,
+                    FechaEntrada = DateTime.UtcNow,
+                    Referencia = dto.Referencia,
+                    UsuarioId = usuarioId
+                };
 
-            return await _context.SaveChangesAsync() > 0;
+                _context.EntradasInventarios.Add(entrada);
+
+                var inventario = await _context.InventarioActuals
+                    .FirstOrDefaultAsync(i => i.ProductoId == dto.ProductoId && i.AlmacenId == dto.AlmacenId);
+
+                if (inventario != null)
+                {
+                    inventario.Cantidad += dto.Cantidad;
+                }
+                else
+                {
+                    _context.InventarioActuals.Add(new InventarioActual
+                    {
+                        ProductoId = dto.ProductoId,
+                        AlmacenId = dto.AlmacenId,
+                        Cantidad = dto.Cantidad
+                    });
+                }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("ERROR: " + ex.Message);
+                Console.WriteLine("INNER: " + ex.InnerException?.Message);
+                // NO intentamos rollback si ya falló automáticamente
+                return false;
+            }
         }
+
+
+
 
         public async Task<bool> RegistrarSalida(SalidaInventarioCreateDto dto, int usuarioId)
         {

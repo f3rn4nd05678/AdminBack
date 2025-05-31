@@ -112,7 +112,7 @@ public partial class AdminDbContext : DbContext
                 .HasColumnName("cantidad");
             entity.Property(e => e.FechaEntrada)
                 .HasDefaultValueSql("now()")
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("fecha_entrada");
             entity.Property(e => e.ProductoId).HasColumnName("producto_id");
             entity.Property(e => e.Referencia).HasColumnName("referencia");
