@@ -41,7 +41,6 @@ namespace AdminBack.Service
 
         public async Task<bool> Crear(PedidoClienteCreateDto dto, int usuarioId, int almacenId)
         {
-
             foreach (var item in dto.Detalles)
             {
                 var stock = await _context.InventarioActuals
@@ -50,7 +49,6 @@ namespace AdminBack.Service
                 if (stock == null || stock.Cantidad < item.Cantidad)
                     throw new Exception($"Stock insuficiente para producto {item.ProductoId}");
             }
-
 
             var pedido = new PedidoCliente
             {
@@ -61,12 +59,10 @@ namespace AdminBack.Service
             };
 
             _context.PedidosCliente.Add(pedido);
-            await _context.SaveChangesAsync();
-
 
             var detalles = dto.Detalles.Select(d => new DetallePedidoCliente
             {
-                PedidoId = pedido.Id,
+                Pedido = pedido, // puedes usar navigation property directamente
                 ProductoId = d.ProductoId,
                 Cantidad = d.Cantidad,
                 PrecioUnitario = d.PrecioUnitario
@@ -93,7 +89,9 @@ namespace AdminBack.Service
                     inventario.Cantidad -= d.Cantidad;
             }
 
+            // Solo un SaveChanges al final, garantiza que todo esté disponible en BD
             return await _context.SaveChangesAsync() > 0;
         }
+
     }
 }

@@ -20,6 +20,10 @@ namespace AdminBack.Service
 
         public async Task<object?> GenerarFacturaJson(int pedidoId)
         {
+            var detallesCount = await _context.DetallesPedidoCliente
+    .CountAsync(d => d.PedidoId == pedidoId);
+            Console.WriteLine($"DETALLES EN BD: {detallesCount}");
+
             var pedido = await _context.PedidosCliente
                 .Include(p => p.Cliente)
                 .Include(p => p.Detalles)
