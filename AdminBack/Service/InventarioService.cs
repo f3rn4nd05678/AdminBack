@@ -127,26 +127,66 @@ namespace AdminBack.Service
 
         public async Task<bool> RegistrarSalida(SalidaInventarioCreateDto dto, int usuarioId)
         {
-            var inventario = await _context.InventarioActuals.FirstOrDefaultAsync(i =>
-                i.ProductoId == dto.ProductoId && i.AlmacenId == dto.AlmacenId);
+            await using var transaction = await _context.Database.BeginTransactionAsync();
 
-            if (inventario == null || inventario.Cantidad < dto.Cantidad)
-                return false;
-
-            var salida = new SalidasInventario
+            try
             {
-                ProductoId = dto.ProductoId,
-                AlmacenId = dto.AlmacenId,
-                Cantidad = dto.Cantidad,
-                FechaSalida = DateTime.UtcNow,
-                Referencia = dto.Referencia,
-                UsuarioId = usuarioId
-            };
+                var inventarioOrigen = await _context.InventarioActuals
+                    .FirstOrDefaultAsync(i => i.ProductoId == dto.ProductoId && i.AlmacenId == dto.AlmacenId);
 
-            _context.SalidasInventarios.Add(salida);
-            inventario.Cantidad -= dto.Cantidad;
+                if (inventarioOrigen == null || inventarioOrigen.Cantidad < dto.Cantidad)
+                    return false;
 
-            return await _context.SaveChangesAsync() > 0;
+                // Registrar salida
+                var salida = new SalidasInventario
+                {
+                    ProductoId = dto.ProductoId,
+                    AlmacenId = dto.AlmacenId,
+                    Cantidad = dto.Cantidad,
+                    FechaSalida = DateTime.UtcNow,
+                    Referencia = dto.Referencia,
+                    UsuarioId = usuarioId
+                };
+                _context.SalidasInventarios.Add(salida);
+                inventarioOrigen.Cantidad -= dto.Cantidad;
+
+                // Si hay almacén destino, registrar entrada
+                if (dto.AlmacenDestinoId.HasValue && dto.AlmacenDestinoId.Value != dto.AlmacenId)
+                {
+                    var entrada = new EntradasInventario
+                    {
+                        ProductoId = dto.ProductoId,
+                        AlmacenId = dto.AlmacenDestinoId.Value,
+                        Cantidad = dto.Cantidad,
+                        FechaEntrada = DateTime.UtcNow,
+                        Referencia = $"Transferencia desde almacén {dto.AlmacenId}",
+                        UsuarioId = usuarioId
+                    };
+                    _context.EntradasInventarios.Add(entrada);
+
+                    var inventarioDestino = await _context.InventarioActuals
+                        .FirstOrDefaultAsync(i => i.ProductoId == dto.ProductoId && i.AlmacenId == dto.AlmacenDestinoId);
+
+                    if (inventarioDestino != null)
+                        inventarioDestino.Cantidad += dto.Cantidad;
+                    else
+                        _context.InventarioActuals.Add(new InventarioActual
+                        {
+                            ProductoId = dto.ProductoId,
+                            AlmacenId = dto.AlmacenDestinoId.Value,
+                            Cantidad = dto.Cantidad
+                        });
+                }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
+
     }
 }

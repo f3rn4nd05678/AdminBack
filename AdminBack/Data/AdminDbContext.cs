@@ -241,7 +241,7 @@ public partial class AdminDbContext : DbContext
                 .HasColumnName("cantidad");
             entity.Property(e => e.FechaSalida)
                 .HasDefaultValueSql("now()")
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("fecha_salida");
             entity.Property(e => e.ProductoId).HasColumnName("producto_id");
             entity.Property(e => e.Referencia).HasColumnName("referencia");
@@ -278,7 +278,7 @@ public partial class AdminDbContext : DbContext
                 .HasColumnName("email");
             entity.Property(e => e.FechaCreacion)
                 .HasDefaultValueSql("now()")
-                .HasColumnType("timestamp without time zone")
+                .HasColumnType("timestamp with time zone")
                 .HasColumnName("fecha_creacion");
             entity.Property(e => e.NombreCompleto)
                 .HasMaxLength(100)
@@ -447,7 +447,11 @@ public partial class AdminDbContext : DbContext
             entity.Property(e => e.TransportistaId).HasColumnName("transportista_id");
             entity.Property(e => e.RutaId).HasColumnName("ruta_id");
             entity.Property(e => e.Estado).HasColumnName("estado").HasDefaultValue("Pendiente");
-            entity.Property(e => e.FechaAsignacion).HasColumnName("fecha_asignacion").HasDefaultValueSql("now()");
+            entity.Property(e => e.FechaAsignacion)
+    .HasColumnName("fecha_asignacion")
+    .HasDefaultValueSql("now()")
+    .HasColumnType("timestamp with time zone");
+            ;
 
             entity.HasOne(e => e.Pedido)
                 .WithMany()
